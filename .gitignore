@@ -1,0 +1,13 @@
+# Ignora datasets grandes
+data/*
+
+# Python
+__pycache__/
+*.pyc
+
+# Ambientes
+venv/
+*.env
+
+# Outros
+*.log
