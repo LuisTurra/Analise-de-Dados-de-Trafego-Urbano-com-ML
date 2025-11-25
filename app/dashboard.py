@@ -1,4 +1,5 @@
 import dash
+import os
 from dash import html, dcc
 import dash_leaflet as dl
 import pandas as pd
@@ -168,4 +169,5 @@ def run_dashboard(predictions):
 
 if __name__ == '__main__':
     print("Rodando localmente...")
-    app.run(debug=False, host="0.0.0.0", port=8050)
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 8050)))
+

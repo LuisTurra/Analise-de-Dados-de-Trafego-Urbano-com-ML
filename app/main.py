@@ -1,17 +1,18 @@
-from .dashboard import app, run_dashboard
-from .model import train_model, explain_model
-from .etl import etl_process
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dashboard import app, run_dashboard
+from model import train_model, explain_model
+from etl import etl_process
 
-app_server = None
+app_server = app.server
 
 if __name__ == "__main__":
-    print("Iniciando ETL...")
+    
+    os.environ['JAVA_HOME'] = '/usr/lib/jvm/default-java'  
+    os.environ['HADOOP_HOME'] = '/opt/hadoop'  
+    os.environ['PYSPARK_PYTHON'] = sys.executable  
     df = etl_process("data/traffic_data.csv")
-    print("Treinando modelo...")
     model, predictions = train_model(df)
-    print("Gerando explicabilidade SHAP...")
-    print("Iniciando dashboard...")
+    explain_model(model, predictions)
     run_dashboard(predictions)
-
-    from dashboard import app
-    app_server = app.server  

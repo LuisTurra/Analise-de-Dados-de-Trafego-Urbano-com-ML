@@ -1,4 +1,7 @@
 import os
+os.environ['JAVA_HOME'] = '/usr/lib/jvm/default-java'  
+os.environ['HADOOP_HOME'] = '/opt/hadoop' 
+os.environ['PYSPARK_PYTHON'] = os.environ.get('PYSPARK_PYTHON', 'python3')  
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, regexp_replace
 from pyspark.ml.feature import VectorAssembler
