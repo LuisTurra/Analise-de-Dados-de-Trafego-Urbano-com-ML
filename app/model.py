@@ -21,7 +21,7 @@
 def explain_model(model, data):
     print("SHAP desativado no Render (imagem já gerada localmente)")
     # """
-    # Explicabilidade com SHAP – versão corrigida pro PySpark + Vector
+    # Explicabilidade com SHAP  
     # """
     # try:
         
@@ -45,5 +45,5 @@ def explain_model(model, data):
     #     print("Gráfico salvo como shap_summary.png na raiz do projeto!")
 
     # except Exception as e:
-    #     print(f"SHAP falhou (normal em algumas versões): {e}")
+    #     print(f"SHAP falhou : {e}")
     #     print("Mas o modelo e o dashboard funcionam perfeitamente!")
