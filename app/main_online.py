@@ -5,9 +5,8 @@ from .dashboard import app, run_dashboard
 app_server = app.server  
 
 if __name__ == "__main__":
-    print("Iniciando versão ONLINE — dashboard leve e lindo")
+    print("Iniciando versão ONLINE")
 
-    
     np.random.seed(42)
     n_days = 30
     hours = np.tile(np.arange(1, 28), n_days)
@@ -21,5 +20,8 @@ if __name__ == "__main__":
     df['prediction'] = df['label'] + np.random.normal(0, 2.5, len(df))
     df['prediction'] = df['prediction'].clip(0, 100)
 
-   
     run_dashboard(df)
+
+    
+    print("Dashboard carregado! Iniciando servidor...")
+    app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)), debug=False)
