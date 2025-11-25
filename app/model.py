@@ -5,12 +5,12 @@ from pyspark.ml import Pipeline
 from pyspark.ml.regression import RandomForestRegressor
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.sql.functions import regexp_replace, col
 
 def train_model(df):
-    feature_cols = [col for col in df.columns if col not in ["Slowness in traffic (%)", "slowness_clean"]]
-    assembler = VectorAssembler(inputCols=feature_cols, outputCol="features")
-    
-    rf = RandomForestRegressor(featuresCol="features", labelCol="slowness_clean", numTrees=100)
+    feature_cols = [col for col in df.columns if col not in ["Slowness in traffic (%)", "slowness_clean", "features"]]   
+    assembler = VectorAssembler(inputCols=feature_cols, outputCol="feature_vector")
+    rf = RandomForestRegressor(featuresCol="feature_vector", labelCol="slowness_clean", numTrees=100)
     pipeline = Pipeline(stages=[assembler, rf])
     
     # Treino/teste
@@ -26,10 +26,7 @@ def train_model(df):
     
     return model, predictions
 
-# SHAP desativado no Render
-# def explain_model(model, predictions):
-#     print("SHAP desativado no Render – imagem estática carregada")
-    
+  
 def explain_model(model, data):
     """
     Explicabilidade com SHAP  
