@@ -1,6 +1,6 @@
 from .dashboard import app, run_dashboard
 from .model import train_model, explain_model
-from etl import etl_process
+from .etl import etl_process
 
 app_server = None
 
