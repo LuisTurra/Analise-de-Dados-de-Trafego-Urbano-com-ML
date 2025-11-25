@@ -22,6 +22,16 @@ python app/main.py
 ## Dataset
 Use: https://archive.ics.uci.edu/dataset/483/behavior+of+the+urban+traffic+of+the+city+of+sao+paulo+in+brazil
 
+## resultados do modelo
+Melhores parâmetros:
+  numTrees: 50
+  maxDepth: 8
+
+RESULTADOS DO MODELO:
+  RMSE: 3.152
+  MAE:  2.451
+  R²:   0.548
+
 ## Desafios Superados
 - Processamento distribuído com PySpark para big data.
 - Integração de mapa em Render.
