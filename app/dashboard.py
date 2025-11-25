@@ -120,14 +120,22 @@ def run_dashboard(predictions):
                style={'width': '100%', 'height': '650px', 'borderRadius': '20px', 'boxShadow': '0 15px 40px rgba(0,0,0,0.3)'}),
 
         # SHAP
-        html.H2("Importância das Features (SHAP Values)",
+        # html.H2("Importância das Features (SHAP Values)",
+        #         style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': '90px'}),
+        # html.P("As features mais importantes para o modelo prever lentidão (ex: 'Hour (Coded)' é o horário do dia)",
+        #        style={'textAlign': 'center', 'color': '#7f8c8d', 'fontSize': '16px'}),
+        # html.Img(src=shap_image,
+        #          style={'width': '90%', 'maxWidth': '1100px', 'margin': '40px auto', 'display': 'block',
+        #                 'border': '5px solid #3498db', 'borderRadius': '20px'}),
+        
+        # === SHAP ESTÁTICO (sem rodar SHAP no Render) ===
+        html.H2("Importância das Features (SHAP Values)", 
                 style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': '90px'}),
-        html.P("As features mais importantes para o modelo prever lentidão (ex: 'Hour (Coded)' é o horário do dia)",
-               style={'textAlign': 'center', 'color': '#7f8c8d', 'fontSize': '16px'}),
-        html.Img(src=shap_image,
-                 style={'width': '90%', 'maxWidth': '1100px', 'margin': '40px auto', 'display': 'block',
-                        'border': '5px solid #3498db', 'borderRadius': '20px'}),
-
+        html.Img(
+            src="/assets/shap_summary.png",  # caminho estático
+            style={'width': '90%', 'maxWidth': '1100px', 'margin': '40px auto', 'display': 'block',
+                'border': '5px solid #3498db', 'borderRadius': '20px'}
+),
         # Rodapé
         html.Footer("Projeto completo por Luis Turra – Novembro 2025 | PySpark • ML • Dash • SHAP",
                     style={'textAlign': 'center', 'marginTop': '100px', 'padding': '60px',
