@@ -10,14 +10,14 @@ Pipeline de ML com PySpark para prever congestionamentos em São Paulo. Inclui E
 
 ## Como rodar
 
-### Local (com PySpark + modelo real + SHAP)
+### Local (com PySpark + modelo real)
 ```bash
 pip install -r requirements.txt
 python -m pip install pyspark==3.5.2  # só uma vez
 python app/main.py
 
-## Demo
--
+## Live Demo no Render.com
+- https://analise-de-dados-de-trafego-urbano-com-ml.onrender.com/
 
 ## Dataset
 Use: https://archive.ics.uci.edu/dataset/483/behavior+of+the+urban+traffic+of+the+city+of+sao+paulo+in+brazil
