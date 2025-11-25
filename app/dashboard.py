@@ -40,22 +40,22 @@ def create_layout(pdf):
         dl.Map([dl.TileLayer(), dl.LayerGroup([dl.CircleMarker(center=p, radius=8, color="#e74c3c", fillOpacity=0.6) for p in points])],
                center=[-23.55, -46.63], zoom=11, style={'height':'600px'}),
         html.Footer([
-    html.Div("Luis Turra – 2025", style={'fontWeight': 'bold', 'fontSize': '18px'}),
-    html.Div([
-        html.A("GitHub", href="https://github.com/LuisTurra", target="_blank", 
-               style={'color': '#58a6ff', 'margin': '0 15px', 'textDecoration': 'none', 'fontWeight': '500'}),
-        "•",
-        html.A("Portfólio", href="https://luisturra.com", target="_blank", 
-               style={'color': '#58a6ff', 'margin': '0 15px', 'textDecoration': 'none', 'fontWeight': '500'})
-    ])
-], style={
-    'textAlign': 'center',
-    'padding': '50px 20px',
-    'background': '#2c3e50',
-    'color': 'white',
-    'marginTop': '80px',
-    'fontFamily': 'Arial, sans-serif'
-})
+        html.Div("Luis Turra – 2025", style={'fontWeight': 'bold', 'fontSize': '18px'}),
+        html.Div([
+            html.A("GitHub", href="https://github.com/LuisTurra", target="_blank", 
+                    style={'color': '#58a6ff', 'margin': '0 15px', 'textDecoration': 'none', 'fontWeight': '500'}),
+            "•",
+            html.A("Portfólio", href="https://luisturra.com", target="_blank", 
+                    style={'color': '#58a6ff', 'margin': '0 15px', 'textDecoration': 'none', 'fontWeight': '500'})
+        ])
+        ], style={
+        'textAlign': 'center',
+        'padding': '50px 20px',
+        'background': '#2c3e50',
+        'color': 'white',
+        'marginTop': '80px',
+        'fontFamily': 'Arial, sans-serif'
+        }) ], style={'fontFamily':'Arial','background':'#f8f9fa'})
 
 def run_dashboard(predictions):
     if hasattr(predictions, "toPandas"):
