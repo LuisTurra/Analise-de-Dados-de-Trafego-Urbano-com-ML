@@ -1,25 +1,36 @@
-# from pyspark.ml.regression import RandomForestRegressor
-# from pyspark.ml.evaluation import RegressionEvaluator
-# from pyspark.ml import Pipeline
 # import shap
 # import pandas as pd
 
-# def train_model(df):
-#     """
-#     Treina um modelo de Random Forest para prever congestionamento.
-#     """
-#     (train_data, test_data) = df.randomSplit([0.8, 0.2])
-#     rf = RandomForestRegressor(featuresCol="features", labelCol="label", numTrees=100)
-#     pipeline = Pipeline(stages=[rf])
-#     model = pipeline.fit(train_data)
-#     predictions = model.transform(test_data)
-#     evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
-#     rmse = evaluator.evaluate(predictions)
-#     print(f"RMSE do modelo: {rmse}")
-#     return model, predictions
+from pyspark.ml import Pipeline
+from pyspark.ml.regression import RandomForestRegressor
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.evaluation import RegressionEvaluator
 
-def explain_model(model, data):
-    print("SHAP desativado no Render (imagem já gerada localmente)")
+def train_model(df):
+    feature_cols = [col for col in df.columns if col not in ["Slowness in traffic (%)", "slowness_clean"]]
+    assembler = VectorAssembler(inputCols=feature_cols, outputCol="features")
+    
+    rf = RandomForestRegressor(featuresCol="features", labelCol="slowness_clean", numTrees=100)
+    pipeline = Pipeline(stages=[assembler, rf])
+    
+    # Treino/teste
+    train_data, test_data = df.randomSplit([0.8, 0.2], seed=42)
+    model = pipeline.fit(train_data)
+    
+    predictions = model.transform(test_data)
+    predictions = predictions.withColumnRenamed("slowness_clean", "label")
+    
+    evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
+    rmse = evaluator.evaluate(predictions)
+    print(f"RMSE do modelo: {rmse:.3f}")
+    
+    return model, predictions
+
+# SHAP desativado no Render
+def explain_model(model, predictions):
+    print("SHAP desativado no Render – imagem estática carregada")
+    
+#def explain_model(model, data):
     # """
     # Explicabilidade com SHAP  
     # """
@@ -46,4 +57,5 @@ def explain_model(model, data):
 
     # except Exception as e:
     #     print(f"SHAP falhou : {e}")
-    #     print("Mas o modelo e o dashboard funcionam perfeitamente!")
+    #     print("Mas o modelo e o dashboard funcionam perfeitamente!")]
+    
