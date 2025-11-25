@@ -49,4 +49,4 @@ def etl_process(file_path):
     # Label limpo e como double
     df_final = df_final.withColumn("label", col("slowness_clean"))
 
-    return df_final.select("features", "label", "slowness_clean", "Hour (Coded)").cache()
+    return df_final.select("features", "label",  "Hour (Coded)").cache()

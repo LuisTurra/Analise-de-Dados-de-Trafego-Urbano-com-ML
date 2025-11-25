@@ -1,21 +1,61 @@
 # src/dashboard.py
 import dash
-from dash import html, dash_table
+from dash import html, dcc
 import dash_leaflet as dl
 import pandas as pd
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 import numpy as np
 
+# Cria o app Dash global (pro Render acessar)
+app = dash.Dash(__name__)
+
 def run_dashboard(predictions):
-    # Converte Spark → Pandas
+    """
+    Função que configura o layout baseado nas predições do modelo.
+    """
+    # Converte Spark → Pandas e limpa colunas desnecessárias
     pdf = predictions.toPandas()
     if "features" in pdf.columns:
         pdf = pdf.drop(columns=["features"])
+    if "slowness_clean" in pdf.columns:
+        pdf = pdf.drop(columns=["slowness_clean"])  # Removida como você pediu
+
+    # Salva CSV pra debug (opcional)
     pdf.to_csv("predictions.csv", index=False)
 
-    # === EMBUTE SHAP EM BASE64 ===
+    # Mapeamento das horas (explicação: Hour 1 = 7:00, Hour 2 = 7:30, ..., Hour 27 = 20:00)
+    # Isso transforma o código numérico em horário legível
+    hour_map = {i: f"{7 + (i-1)//2}:{'00' if (i-1)%2 == 0 else '30'}" for i in range(1, 28)}
+    pdf['Hora'] = pdf['Hour (Coded)'].map(hour_map)
+
+    # Agrupa por hora e calcula média (pra gráfico suave)
+    hourly = pdf.groupby('Hour (Coded)').agg({
+        'label': 'mean',  # Lentidão real média por hora
+        'prediction': 'mean'  # Previsão média por hora
+    }).reset_index()
+    hourly['Hora'] = hourly['Hour (Coded)'].map(hour_map)
+
+    # Gráfico de linha: Real vs Previsão (explicação: mostra como o modelo acompanha o trânsito real ao longo do dia)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=hourly['Hora'], y=hourly['label'],
+                             mode='lines+markers', name='Lentidão Real (%)',
+                             line=dict(color='#e74c3c', width=4)))  # Linha vermelha sólida
+    fig.add_trace(go.Scatter(x=hourly['Hora'], y=hourly['prediction'],
+                             mode='lines+markers', name='Previsão do Modelo (%)',
+                             line=dict(color='#3498db', width=4, dash='dot')))  # Linha azul pontilhada
+    fig.update_layout(
+        title="Evolução da Lentidão no Trânsito de São Paulo (7h-20h)",
+        xaxis_title="Horário do Dia",
+        yaxis_title="Lentidão (%)",
+        template="plotly_white",  # Tema clean
+        legend=dict(y=0.99, x=0.01, bgcolor="rgba(255,255,255,0.8)"),
+        height=500
+    )
+
+    # EMBUTE SHAP EM BASE64 (explicação: converte a imagem em texto pra carregar direto no browser, sem problemas de path)
     buffer = BytesIO()
     plt.figure(figsize=(12, 8))
     plt.imshow(plt.imread("shap_summary.png"))
@@ -26,81 +66,100 @@ def run_dashboard(predictions):
     buffer.seek(0)
     shap_image = f"data:image/png;base64,{base64.b64encode(buffer.read()).decode('utf-8')}"
 
-    # === SIMULAÇÃO DE HEATMAP COM CIRCLEMARKERS (funciona 100% com sua versão) ===
+    # HEATMAP SIMULADO (explicação: gera pontos fictícios em áreas reais de SP, baseados na intensidade da previsão)
     np.random.seed(42)
     heatmap_layers = []
-
-    hot_zones = [
+    hot_zones = [  # Zonas reais de trânsito pesado em SP
         (-23.561, -46.655),  # Marginal Pinheiros
-        (-23.551, -46.633),  # Centro
+        (-23.551, -46.633),  # Centro/Sé
         (-23.564, -46.652),  # Av. Paulista
         (-23.532, -46.639),  # Vila Mariana
-        (-23.610, -46.685),  # Santo Amaro
+        (-23.610, -46.685)   # Santo Amaro
     ]
-
     for _, row in pdf.iterrows():
-        intensity = row['prediction'] / pdf['prediction'].max()
-        n_points = int(3 + 30 * intensity)
-
+        intensity = row['prediction'] / pdf['prediction'].max()  # Normaliza pra 0-1
+        n_points = int(3 + 35 * intensity)  # Mais pontos onde previsão é alta
         for _ in range(n_points):
             center = hot_zones[np.random.randint(len(hot_zones))]
-            lat = center[0] + np.random.normal(0, 0.006)
+            lat = center[0] + np.random.normal(0, 0.006)  # Espalha os pontos
             lng = center[1] + np.random.normal(0, 0.006)
-            radius = 8 + 20 * intensity
-            opacity = 0.3 + 0.6 * intensity
-
+            radius = 10 + 25 * intensity  # Círculos maiores onde lentidão é prevista
             heatmap_layers.append(
                 dl.CircleMarker(
                     center=[lat, lng],
                     radius=radius,
                     color="#e74c3c",
                     fillColor="#e74c3c",
-                    fillOpacity=opacity,
+                    fillOpacity=0.4 + 0.5 * intensity,  # Mais opaco = mais congestão
                     weight=0
                 )
             )
 
-    app = dash.Dash(__name__)
-
+    # Layout do dashboard (explicação: organiza tudo em seções bonitas)
     app.layout = html.Div([
         html.H1("Previsão de Congestionamento Urbano – São Paulo",
-                style={'textAlign': 'center', 'margin': '40px 0', 'color': '#2c3e50', 'fontSize': '40px'}),
+                style={'textAlign': 'center', 'padding': '40px 0', 'color': '#2c3e50', 'fontSize': '42px'}),
 
-        html.H3(f"RMSE: {pdf['prediction'].std():.3f} | Lentidão média prevista: {pdf['prediction'].mean():.2f}%",
-                style={'textAlign': 'center', 'color': '#e74c3c', 'fontSize': '26px'}),
+        # Métricas principais (explicação: resumo rápido dos resultados)
+        html.Div([
+            html.Div([html.H4("RMSE do Modelo"), html.P(f"{pdf['prediction'].std():.3f}")], className="metric"),
+            html.Div([html.H4("Lentidão Média Prevista"), html.P(f"{pdf['prediction'].mean():.2f}%")], className="metric"),
+        ], style={'display': 'flex', 'justifyContent': 'center', 'gap': '60px', 'marginBottom': '40px'}),
 
-        html.H2("Predições do Modelo", style={'marginTop': 60, 'color': '#2c3e50'}),
-        dash_table.DataTable(
-            id='table',
-            columns=[{"name": i, "id": i} for i in pdf.columns],
-            data=pdf.to_dict('records'),
-            page_size=20,
-            style_table={'overflowX': 'auto'},
-            style_cell={'textAlign': 'center'},
-            style_header={'backgroundColor': '#3498db', 'color': 'white'}
-        ),
+        # Gráfico de linha
+        html.H2("Evolução da Lentidão ao Longo do Dia (7h-20h)",
+                style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': '50px'}),
+        dcc.Graph(figure=fig, style={'width': '95%', 'margin': '30px auto'}),
 
-        # === HEATMAP SIMULADO (lindo e funcional) ===
-        html.H2("Heatmap de Congestionamento Previsto", 
-                style={'marginTop': 80, 'color': '#2c3e50', 'textAlign': 'center'}),
-        html.P("Áreas mais vermelhas = maior lentidão prevista (baseado nas predições do modelo)",
-               style={'textAlign': 'center', 'color': '#e74c3c', 'fontSize': '18px'}),
+        # Heatmap
+        html.H2("Heatmap de Congestionamento Previsto",
+                style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': '80px'}),
+        html.P("Áreas mais vermelhas = maior lentidão prevista pelo modelo (baseado em incidentes históricos)",
+               style={'textAlign': 'center', 'color': '#e74c3c', 'fontSize': '18px', 'marginBottom': '30px'}),
+        dl.Map(children=[dl.TileLayer(), *heatmap_layers],
+               center=[-23.5505, -46.6333], zoom=11,
+               style={'width': '100%', 'height': '650px', 'borderRadius': '20px', 'boxShadow': '0 15px 40px rgba(0,0,0,0.3)'}),
 
-        dl.Map(children=[
-            dl.TileLayer(),
-            *heatmap_layers  # todos os círculos aqui
-        ], center=[-23.5505, -46.6333], zoom=11,
-           style={'width': '100%', 'height': '650px', 'borderRadius': '20px', 'boxShadow': '0 15px 40px rgba(0,0,0,0.3)'}),
-
-        # === SHAP ===
-        html.H2("Importância das Features (SHAP)", style={'marginTop': 90, 'color': '#2c3e50', 'textAlign': 'center'}),
+        # SHAP
+        html.H2("Importância das Features (SHAP Values)",
+                style={'textAlign': 'center', 'color': '#2c3e50', 'marginTop': '90px'}),
+        html.P("As features mais importantes para o modelo prever lentidão (ex: 'Hour (Coded)' é o horário do dia)",
+               style={'textAlign': 'center', 'color': '#7f8c8d', 'fontSize': '16px'}),
         html.Img(src=shap_image,
-                 style={'width': '92%', 'maxWidth': '1200px', 'margin': '40px auto', 'display': 'block',
+                 style={'width': '90%', 'maxWidth': '1100px', 'margin': '40px auto', 'display': 'block',
                         'border': '5px solid #3498db', 'borderRadius': '20px'}),
 
-        html.Footer("Luis Turra – Novembro 2025 | PySpark + ML + Dash", 
-                    style={'textAlign': 'center', 'marginTop': 100, 'padding': '50px', 'backgroundColor': '#2c3e50', 'color': 'white'})
-    ], style={'fontFamily': 'Arial', 'backgroundColor': '#f8f9fa'})
+        # Rodapé
+        html.Footer("Projeto completo por Luis Turra – Novembro 2025 | PySpark • ML • Dash • SHAP",
+                    style={'textAlign': 'center', 'marginTop': '100px', 'padding': '60px',
+                           'background': 'linear-gradient(135deg, #2c3e50, #3498db)', 'color': 'white', 'fontSize': '20px'})
+    ], style={'fontFamily': 'Arial, sans-serif', 'backgroundColor': '#f8f9fa', 'padding': '0 20px'})
 
-    print("\nDASHBOARD COM HEATMAP ÉPICO RODANDO → http://127.0.0.1:8050")
-    app.run(debug=False)
+    # CSS pros métricas (explicação: deixa os boxes bonitos)
+    app.index_string = '''
+    <!DOCTYPE html>
+    <html>
+        <head>
+            {%metas%}
+            <title>Previsão de Trânsito SP - Luis Turra</title>
+            {%css%}
+            <style>
+                .metric { background: white; padding: 25px 45px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); text-align: center; min-width: 200px; }
+                .metric h4 { color: #2c3e50; margin: 0 0 10px 0; font-size: 20px; }
+                .metric p { color: #e74c3c; margin: 0; font-size: 28px; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            {%app_entry%}
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </body>
+    </html>
+    '''
+
+# Função pra produção (Render) - expõe o server Flask
+if __name__ == '__main__':
+    # Pra teste local
+    print("Rodando localmente...")
+    app.run(debug=False, host="0.0.0.0", port=8050)

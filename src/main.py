@@ -1,11 +1,17 @@
-from etl import etl_process, spark
-from model import train_model, explain_model
 from dashboard import run_dashboard
+from model import train_model
+from etl import etl_process
+
+app_server = None
 
 if __name__ == "__main__":
-    file_path = r"C:\Users\Microsoft\Desktop\Projects\Python Projects\Analise-de-Dados-de-Trafego-Urbano-com-ML\data\traffic_data.csv"
-    df = etl_process(file_path)
+    print("Iniciando ETL...")
+    df = etl_process("../data/traffic_data.csv")
+    print("Treinando modelo...")
     model, predictions = train_model(df)
-    explain_model(model, predictions)
-    run_dashboard(predictions)  # Chama Dash dashboard diretamente
-    spark.stop()
+    print("Gerando explicabilidade SHAP...")
+    print("Iniciando dashboard...")
+    run_dashboard(predictions)
+
+    from dashboard import app
+    app_server = app.server  
