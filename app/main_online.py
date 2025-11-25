@@ -2,29 +2,24 @@ import pandas as pd
 import numpy as np
 from .dashboard import app, run_dashboard
 
-app_server = app.server 
+app_server = app.server  
 
 if __name__ == "__main__":
-    print("Iniciando versão ONLINE (sem PySpark — ideal pra portfólio)")
-    
+    print("Iniciando versão ONLINE — dashboard leve e lindo")
+
     
     np.random.seed(42)
     n_days = 30
-    hours_per_day = 27  
-    total = n_days * hours_per_day
+    hours = np.tile(np.arange(1, 28), n_days)
     
-    data = {
-        'Hour (Coded)': np.tile(np.arange(1, 28), n_days),
-        'label': np.abs(8 + 12 * np.random.beta(1.5, 4, total) + 
-                       25 * (np.tile(np.arange(1, 15, 22), n_days)) +  
-                       np.random.normal(0, 3, total)),
+    df = pd.DataFrame({
+        'Hour (Coded)': hours,
+        'label': np.abs(8 + 12*np.random.beta(1.5, 4, len(hours)) + 
+                       25*(hours > 15) + np.random.normal(0, 3, len(hours))),
         'prediction': None
-    }
-    df = pd.DataFrame(data)
-    df['prediction'] = df['label'] + np.random.normal(0, 2.5, total)  
+    })
+    df['prediction'] = df['label'] + np.random.normal(0, 2.5, len(df))
     df['prediction'] = df['prediction'].clip(0, 100)
-    
-    print(f"Gerados {len(df)} registros mock — RMSE médio ~2.5")
-    print("Iniciando dashboard...")
 
-    run_dashboard(df)  
+   
+    run_dashboard(df)

@@ -1,5 +1,5 @@
-# import shap
-# import pandas as pd
+import shap
+import pandas as pd
 
 from pyspark.ml import Pipeline
 from pyspark.ml.regression import RandomForestRegressor
