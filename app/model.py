@@ -27,35 +27,35 @@ def train_model(df):
     return model, predictions
 
 # SHAP desativado no Render
-def explain_model(model, predictions):
-    print("SHAP desativado no Render – imagem estática carregada")
+# def explain_model(model, predictions):
+#     print("SHAP desativado no Render – imagem estática carregada")
     
-#def explain_model(model, data):
-    # """
-    # Explicabilidade com SHAP  
-    # """
-    # try:
+def explain_model(model, data):
+    """
+    Explicabilidade com SHAP  
+    """
+    try:
         
-    #     import shap
-    #     import pandas as pd
-    #     import numpy as np
+        import shap
+        import pandas as pd
+        import numpy as np
 
-    #     rf_model = model.stages[-1]
+        rf_model = model.stages[-1]
 
-    #     pdf = data.select("features").toPandas()
-    #     X = np.array(pdf["features"].tolist())  
+        pdf = data.select("features").toPandas()
+        X = np.array(pdf["features"].tolist())  
 
-    #     explainer = shap.TreeExplainer(rf_model)
-    #     shap_values = explainer.shap_values(X)
+        explainer = shap.TreeExplainer(rf_model)
+        shap_values = explainer.shap_values(X)
 
-    #     print("\nSHAP Summary Plot gerado com sucesso!")
-    #     shap.summary_plot(shap_values, X, plot_type="bar", show=False)
-    #     import matplotlib.pyplot as plt
-    #     plt.savefig("shap_summary.png", bbox_inches='tight', dpi=150)
-    #     plt.close()
-    #     print("Gráfico salvo como shap_summary.png na raiz do projeto!")
+        print("\nSHAP Summary Plot gerado com sucesso!")
+        shap.summary_plot(shap_values, X, plot_type="bar", show=False)
+        import matplotlib.pyplot as plt
+        plt.savefig("shap_summary.png", bbox_inches='tight', dpi=150)
+        plt.close()
+        print("Gráfico salvo como shap_summary.png na raiz do projeto!")
 
-    # except Exception as e:
-    #     print(f"SHAP falhou : {e}")
-    #     print("Mas o modelo e o dashboard funcionam perfeitamente!")]
+    except Exception as e:
+        print(f"SHAP falhou : {e}")
+        print("Mas o modelo e o dashboard funcionam perfeitamente!")
     
