@@ -17,23 +17,21 @@ def train_model(df):
     rmse = evaluator.evaluate(predictions)
     print(f"RMSE do modelo: {rmse}")
     return model, predictions
-# src/model.py (só essa função)
+
 def explain_model(model, data):
     """
     Explicabilidade com SHAP – versão corrigida pro PySpark + Vector
     """
     try:
-        # Agora funciona 100%
+        
         import shap
         import pandas as pd
         import numpy as np
 
-        # Extrai o RandomForest do pipeline
         rf_model = model.stages[-1]
 
-        # Converte Spark Vector → numpy array
         pdf = data.select("features").toPandas()
-        X = np.array(pdf["features"].tolist())  # <-- isso que tava faltando!
+        X = np.array(pdf["features"].tolist())  
 
         explainer = shap.TreeExplainer(rf_model)
         shap_values = explainer.shap_values(X)

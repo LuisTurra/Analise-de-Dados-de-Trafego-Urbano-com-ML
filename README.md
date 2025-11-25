@@ -13,12 +13,14 @@ Pipeline de ML com PySpark para prever congestionamentos em São Paulo. Inclui E
 - Dashboard: `streamlit run src/dashboard.py`
 - Testes: `pytest tests/`
 
+## Demo
+-
+
 ## Dataset
 Use: https://archive.ics.uci.edu/dataset/483/behavior+of+the+urban+traffic+of+the+city+of+sao+paulo+in+brazil
 
 ## Resultados
 RMSE exemplo: 3.070 (depende do treino). SHAP para explicações.
-
 
 ## Desafios Superados
 - Processamento distribuído com PySpark para big data.
