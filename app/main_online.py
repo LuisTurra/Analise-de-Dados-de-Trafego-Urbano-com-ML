@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from dashboard import app, run_dashboard
+from .dashboard import app, run_dashboard
 
 app_server = app.server 
 

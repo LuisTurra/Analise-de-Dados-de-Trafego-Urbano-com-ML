@@ -4,7 +4,7 @@ os.environ['HADOOP_HOME'] = '/opt/hadoop'
 os.environ['PYSPARK_PYTHON'] = 'python3'
 os.environ['PYSPARK_DRIVER_PYTHON'] = 'python3'
 from pyspark.sql import SparkSession
-spark = SparkSession.builder.appName("TrafficETL").getOrCreate()
+# spark = SparkSession.builder.appName("TrafficETL").getOrCreate()
 from pyspark.sql.functions import col, regexp_replace
 from pyspark.ml.feature import VectorAssembler
 
