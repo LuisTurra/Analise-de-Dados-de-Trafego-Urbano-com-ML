@@ -1,28 +1,24 @@
 import pandas as pd
-import numpy as np
 from .dashboard import app, run_dashboard
 
-app_server = app.server  
+app_server = app.server
 
-# MOVE OS DADOS MOCK PRA FORA DO MAIN (pra gunicorn carregar)
-print("Iniciando versão ONLINE — dashboard leve e lindo")
+try:
+    df = pd.read_csv("static/real_predictions.csv")
+    print(f"Carregadas {len(df)} predições REAIS do modelo treinado!")
+except Exception as e:
+    print("Erro ao carregar real_predictions.csv:", e)
+    print("Usando mock como fallback...")
+    import numpy as np
+    np.random.seed(42)
+    hours = np.tile(np.arange(1, 28), 30)
+    df = pd.DataFrame({
+        'Hour (Coded)': hours,
+        'label': np.random.normal(50, 15, len(hours)).clip(0, 100),
+        'prediction': np.random.normal(48, 16, len(hours)).clip(0, 100)
+    })
 
-np.random.seed(42)
-n_days = 30
-hours = np.tile(np.arange(1, 28), n_days)
-    
-df = pd.DataFrame({
-    'Hour (Coded)': hours,
-    'label': np.abs(8 + 12*np.random.beta(1.5, 4, len(hours)) + 
-                   25*(hours > 15) + np.random.normal(0, 3, len(hours))),
-    'prediction': None
-})
-df['prediction'] = df['label'] + np.random.normal(0, 2.5, len(df))
-df['prediction'] = df['prediction'].clip(0, 100)
-
-# CHAMA O DASHBOARD PRA ATUALIZAR O LAYOUT (antes do server iniciar)
 run_dashboard(df)
 
 if __name__ == "__main__":
-    # Só pra teste local
     app.run_server(host='0.0.0.0', port=8050, debug=False)

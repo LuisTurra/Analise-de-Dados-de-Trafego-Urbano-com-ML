@@ -1,58 +1,84 @@
-import shap
-import pandas as pd
-
 from pyspark.ml import Pipeline
 from pyspark.ml.regression import RandomForestRegressor
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.sql.functions import regexp_replace, col
+from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
+import numpy as np
 
 def train_model(df):
-    feature_cols = [col for col in df.columns if col not in ["Slowness in traffic (%)", "slowness_clean", "features"]]   
-    assembler = VectorAssembler(inputCols=feature_cols, outputCol="feature_vector")
-    rf = RandomForestRegressor(featuresCol="feature_vector", labelCol="slowness_clean", numTrees=100)
-    pipeline = Pipeline(stages=[assembler, rf])
+    """
+    Recebe o DataFrame já com 'features' (do etl.py)
+    Cria a coluna 'label' aqui (só aqui, pra evitar ambiguidade)
+    Treina Random Forest e retorna modelo + predições
+    """
     
-    # Treino/teste
-    train_data, test_data = df.randomSplit([0.8, 0.2], seed=42)
-    model = pipeline.fit(train_data)
+   
+    df = df.withColumn("label", df.slowness_clean)
+
     
-    predictions = model.transform(test_data)
-    predictions = predictions.withColumnRenamed("slowness_clean", "label")
-    
-    evaluator = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
-    rmse = evaluator.evaluate(predictions)
-    print(f"RMSE do modelo: {rmse:.3f}")
-    
-    return model, predictions
+    train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
 
   
-def explain_model(model, data):
-    """
-    Explicabilidade com SHAP  
-    """
-    try:
-        
-        import shap
-        import pandas as pd
-        import numpy as np
+    rf = RandomForestRegressor(
+        featuresCol="features",
+        labelCol="label",
+        numTrees=100,
+        maxDepth=10,
+        seed=42
+    )
 
-        rf_model = model.stages[-1]
 
-        pdf = data.select("features").toPandas()
-        X = np.array(pdf["features"].tolist())  
+    pipeline = Pipeline(stages=[rf])
 
-        explainer = shap.TreeExplainer(rf_model)
-        shap_values = explainer.shap_values(X)
+ 
+    paramGrid = ParamGridBuilder() \
+        .addGrid(rf.numTrees, [50, 100]) \
+        .addGrid(rf.maxDepth, [8, 10]) \
+        .build()
 
-        print("\nSHAP Summary Plot gerado com sucesso!")
-        shap.summary_plot(shap_values, X, plot_type="bar", show=False)
-        import matplotlib.pyplot as plt
-        plt.savefig("shap_summary.png", bbox_inches='tight', dpi=150)
-        plt.close()
-        print("Gráfico salvo como shap_summary.png na raiz do projeto!")
-
-    except Exception as e:
-        print(f"SHAP falhou : {e}")
-        print("Mas o modelo e o dashboard funcionam perfeitamente!")
     
+    evaluator = RegressionEvaluator(
+        labelCol="label",
+        predictionCol="prediction",
+        metricName="rmse"
+    )
+
+  
+    crossval = CrossValidator(
+        estimator=pipeline,
+        estimatorParamMaps=paramGrid,
+        evaluator=evaluator,
+        numFolds=3,
+        seed=42
+    )
+
+    print("Treinando modelo Random Forest com Cross-Validation...")
+    cv_model = crossval.fit(train_df)
+
+ 
+    best_model = cv_model.bestModel
+    rf_model = best_model.stages[0]
+
+    print(f"Melhores parâmetros:")
+    print(f"  numTrees: {rf_model.getNumTrees}")
+    print(f"  maxDepth: {rf_model.getMaxDepth()}")
+
+    
+    predictions = best_model.transform(test_df)
+
+  
+    rmse = evaluator.evaluate(predictions)
+    mae = evaluator.evaluate(predictions, {evaluator.metricName: "mae"})
+    r2 = evaluator.evaluate(predictions, {evaluator.metricName: "r2"})
+
+    print(f"\nRESULTADOS DO MODELO:")
+    print(f"  RMSE: {rmse:.3f}")
+    print(f"  MAE:  {mae:.3f}")
+    print(f"  R²:   {r2:.3f}")
+
+
+    predictions = predictions.select(
+        "Hour (Coded)", "label", "prediction"
+    )
+
+    return best_model, predictions
