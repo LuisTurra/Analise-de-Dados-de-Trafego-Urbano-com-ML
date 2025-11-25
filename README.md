@@ -8,10 +8,13 @@ Pipeline de ML com PySpark para prever congestionamentos em São Paulo. Inclui E
 2. Instale: `pip install -r requirements.txt`
 3. Baixe dataset e coloque em `data/`.
 
-## Uso
-- Rode pipeline: `python src/main.py`
-- Dashboard: `streamlit run src/dashboard.py`
-- Testes: `pytest tests/`
+## Como rodar
+
+### Local (com PySpark + modelo real + SHAP)
+```bash
+pip install -r requirements.txt
+python -m pip install pyspark==3.5.2  # só uma vez
+python app/main.py
 
 ## Demo
 -
