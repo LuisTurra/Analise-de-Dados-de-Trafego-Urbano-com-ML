@@ -19,9 +19,7 @@ Use: https://archive.ics.uci.edu/dataset/483/behavior+of+the+urban+traffic+of+th
 ## Resultados
 RMSE exemplo: 3.070 (depende do treino). SHAP para explicações.
 
-## Diagrama do Pipeline
-[Insira imagem ou use Mermaid: ETL -> Model -> Dashboard]
 
 ## Desafios Superados
 - Processamento distribuído com PySpark para big data.
-- Integração de mapa em Streamlit.
+- Integração de mapa em Render.
